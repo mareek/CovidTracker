@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "core-js": "^3.6.5",
+    "lodash": "^4.17.20",
     "vue": "^2.6.11",
     "vuetrend": "^0.3.4"
   },
