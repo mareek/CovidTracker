@@ -1,7 +1,18 @@
 <template>
   <div>
-    <Graphique title="Décès" :values="decesHebdomadaire" />
-    <Graphique title="Circulation" :values="circulationHebdomadaire" />
+    <div>
+      <label for="selectGraph">Type de graphique : </label>
+      <select id="selectGraph" v-model="selectedChartProp">
+        <option
+          v-for="chartType in chartTypes"
+          :key="chartType.prop"
+          :value="chartType.prop"
+        >
+          {{ chartType.label }}
+        </option>
+      </select>
+    </div>
+    <Graphique :title="chartTitle" :values="chartData" />
   </div>
 </template>
 
@@ -18,9 +29,30 @@ export default {
   data() {
     return {
       rawData: [],
+      selectedChartProp: "positiviteHebdomadaire",
     };
   },
   computed: {
+    chartTypes() {
+      return [
+        { label: "Décès", prop: "decesHebdomadaire" },
+        { label: "Nouveau cas", prop: "casHebdomadaire" },
+        { label: "Positivité", prop: "positiviteHebdomadaire" },
+        { label: "Indice de Circulation", prop: "circulationHebdomadaire" },
+        { label: "Positivité", prop: "positiviteHebdomadaire" },
+        { label: "Hospitalisés", prop: "hospitalises" },
+        { label: "Réanimation", prop: "reanimation" },
+      ];
+    },
+    chartData() {
+      return this[this.selectedChartProp];
+    },
+    chartTitle() {
+      const chartType = this.chartTypes.find(
+        (c) => c.prop === this.selectedChartProp
+      );
+      return chartType.label;
+    },
     sortedData() {
       return _.orderBy(this.rawData, ["date"]);
     },
@@ -71,6 +103,9 @@ export default {
         (c, p) => c * p
       );
     },
+  },
+  created() {
+    //this.selectedChartType=this.chartTypes[0];
   },
   async mounted() {
     try {
