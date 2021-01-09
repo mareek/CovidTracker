@@ -1,6 +1,6 @@
 <template>
   <div>
-    <div>
+    <p>
       <label for="selectGraph">Type de graphique : </label>
       <select id="selectGraph" v-model="selectedChartProp">
         <option
@@ -11,7 +11,19 @@
           {{ chartType.label }}
         </option>
       </select>
-    </div>
+    </p>
+    <p>
+      <label for="selectPeriod">Période affichée : </label>
+      <select id="selectPeriod" v-model="selectedPeriod">
+        <option
+          v-for="period in periods"
+          :key="period.code"
+          :value="period.code"
+        >
+          {{ period.label }}
+        </option>
+      </select>
+    </p>
     <Graphique :title="chartTitle" :values="chartData" />
   </div>
 </template>
@@ -30,6 +42,7 @@ export default {
     return {
       rawData: [],
       selectedChartProp: "positiviteHebdomadaire",
+      selectedPeriod: "wholeData",
     };
   },
   computed: {
@@ -39,13 +52,27 @@ export default {
         { label: "Nouveau cas", prop: "casHebdomadaire" },
         { label: "Positivité", prop: "positiviteHebdomadaire" },
         { label: "Indice de Circulation", prop: "circulationHebdomadaire" },
-        { label: "Positivité", prop: "positiviteHebdomadaire" },
         { label: "Hospitalisés", prop: "hospitalises" },
         { label: "Réanimation", prop: "reanimation" },
       ];
     },
+    periods() {
+      return [
+        { label: "Depuis mars 2020", code: "wholeData" },
+        { label: "7 derniers jours", code: "last7days" },
+        { label: "30 derniers jours", code: "last30days" },
+      ];
+    },
     chartData() {
-      return this[this.selectedChartProp];
+      const selectedChartData = this[this.selectedChartProp];
+      switch (this.selectedPeriod) {
+        case "last7days":
+          return selectedChartData.slice(-7);
+        case "last30days":
+          return selectedChartData.slice(-30);
+        default:
+          return selectedChartData;
+      }
     },
     chartTitle() {
       const chartType = this.chartTypes.find(
