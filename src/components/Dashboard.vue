@@ -24,6 +24,7 @@
         </option>
       </select>
     </p>
+    <p>{{ chartTitle }} au {{ latestDate }} : {{ latestValue }}</p>
     <Graphique :title="chartTitle" :values="chartData" />
   </div>
 </template>
@@ -41,15 +42,15 @@ export default {
   data() {
     return {
       rawData: [],
-      selectedChartProp: "positiviteHebdomadaire",
-      selectedPeriod: "wholeData",
+      selectedChartProp: "decesHebdomadaire",
+      selectedPeriod: "last30days",
     };
   },
   computed: {
     chartTypes() {
       return [
-        { label: "Décès", prop: "decesHebdomadaire" },
-        { label: "Nouveau cas", prop: "casHebdomadaire" },
+        { label: "Décès par semaine", prop: "decesHebdomadaire" },
+        { label: "Nouveau cas par semaine", prop: "casHebdomadaire" },
         { label: "Positivité", prop: "positiviteHebdomadaire" },
         { label: "Indice de Circulation", prop: "circulationHebdomadaire" },
         { label: "Hospitalisés", prop: "hospitalises" },
@@ -79,6 +80,19 @@ export default {
         (c) => c.prop === this.selectedChartProp
       );
       return chartType.label;
+    },
+    hasData() {
+      return this.rawData && this.rawData.length;
+    },
+    latestDate() {
+      const sortedData = this.sortedData;
+      const latestData = this.hasData && sortedData[sortedData.length - 1];
+      return latestData.date;
+    },
+    latestValue() {
+      const chartData = this.chartData;
+      const latestValue = this.chartData && chartData[chartData.length - 1];
+      return this.formatValue(latestValue);
     },
     sortedData() {
       return _.orderBy(this.rawData, ["date"]);
@@ -131,9 +145,6 @@ export default {
       );
     },
   },
-  created() {
-    //this.selectedChartType=this.chartTypes[0];
-  },
   async mounted() {
     try {
       const response = await fetch(etalabUrl);
@@ -170,6 +181,16 @@ export default {
         result.push(_.sum(dailyValues.slice(lowerBound, i) || 0));
       }
       return result;
+    },
+    formatValue(value) {
+      switch (this.selectedChartProp) {
+        case "positiviteHebdomadaire":
+          return value && value.toFixed(1) + "%";
+        case "circulationHebdomadaire":
+          return value && value.toFixed(0);
+        default:
+          return value;
+      }
     },
   },
 };
