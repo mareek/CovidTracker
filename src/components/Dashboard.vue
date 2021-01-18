@@ -31,7 +31,6 @@
 
 <script>
 import Graphique from "./Graphique.vue";
-import staticData from "../data/code-FRA.json";
 import _ from "lodash";
 
 const etalabUrl = "https://dashboard.covid19.data.gouv.fr/data/code-FRA.json";
@@ -122,10 +121,10 @@ export default {
       return this.getDailyValues("reanimation");
     },
     testsRealises() {
-      return this.getDailyValues("testsRealises", () => 0);
+      return this.getDailyValues("testsRealises");
     },
     testsPositifs() {
-      return this.getDailyValues("testsPositifs", () => 0);
+      return this.getDailyValues("testsPositifs");
     },
     positivite() {
       return _.zipWith(
@@ -147,23 +146,25 @@ export default {
   },
   async mounted() {
     try {
-      const response = await fetch(etalabUrl);
-      this.rawData = await response.json();
+      this.rawData = await this.fetchData(etalabUrl);
     } catch {
-      this.rawData = staticData;
+      this.rawData = await this.fetchData("/data/code-FRA.json");
     }
   },
   methods: {
-    getDailyValues(propertyName, getDefaultValue) {
+    async fetchData(url) {
+      const response = await fetch(url);
+      return await response.json();
+    },
+    getDailyValues(propertyName) {
       if (!this.sortedData.length) {
         return [];
       }
 
       const result = [this.sortedData[0][propertyName] || 0];
-      getDefaultValue = getDefaultValue || ((i) => result[i - 1]);
       for (let i = 1; i < this.sortedData.length; i++) {
         const dailyValue = this.sortedData[i][propertyName];
-        result[i] = dailyValue || getDefaultValue(i);
+        result[i] = dailyValue || result[i - 1];
       }
       return result;
     },
