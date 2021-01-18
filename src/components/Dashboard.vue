@@ -134,7 +134,7 @@ export default {
       );
     },
     positiviteHebdomadaire() {
-      return this.getWeeklyData(this.positivite);
+      return this.getWeeklyData(this.positivite).map((d) => (d * 100) / 7);
     },
     circulationHebdomadaire() {
       return _.zipWith(
