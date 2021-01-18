@@ -146,7 +146,8 @@ export default {
   },
   async mounted() {
     try {
-      this.rawData = await this.fetchData(etalabUrl);
+      const cheatUrl = "https://cors-anywhere.herokuapp.com/" + etalabUrl;
+      this.rawData = await this.fetchData(cheatUrl);
     } catch {
       this.rawData = await this.fetchData("/data/code-FRA.json");
     }
