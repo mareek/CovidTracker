@@ -59,7 +59,8 @@ export default {
     periods() {
       return [
         { label: "Depuis mars 2020", code: "wholeData" },
-        { label: "7 derniers jours", code: "last7days" },
+        { label: "6 derniers mois", code: "last6Months" },
+        { label: "90 derniers jours", code: "last90days" },
         { label: "30 derniers jours", code: "last30days" },
       ];
     },
@@ -70,6 +71,10 @@ export default {
           return selectedChartData.slice(-7);
         case "last30days":
           return selectedChartData.slice(-30);
+        case "last90days":
+          return selectedChartData.slice(-90);
+        case "last6Months":
+          return selectedChartData.slice(-182);
         default:
           return selectedChartData;
       }
