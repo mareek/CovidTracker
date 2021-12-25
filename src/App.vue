@@ -1,6 +1,7 @@
 <template>
   <div id="app">
     <Dashboard />
+    <a href="https://cors-anywhere.herokuapp.com/corsdemo" target="blank">Si le graphique ne s'affiche pas, demandez l'accès à CORS anywhere</a>
   </div>
 </template>
 

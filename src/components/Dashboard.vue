@@ -42,7 +42,7 @@ export default {
     return {
       rawData: [],
       selectedChartProp: "decesHebdomadaire",
-      selectedPeriod: "last30days",
+      selectedPeriod: "wholeData",
     };
   },
   computed: {
@@ -59,6 +59,7 @@ export default {
     periods() {
       return [
         { label: "Depuis mars 2020", code: "wholeData" },
+        { label: "12 derniers mois", code: "last12Months" },
         { label: "6 derniers mois", code: "last6Months" },
         { label: "90 derniers jours", code: "last90days" },
         { label: "30 derniers jours", code: "last30days" },
@@ -75,6 +76,8 @@ export default {
           return selectedChartData.slice(-90);
         case "last6Months":
           return selectedChartData.slice(-182);
+        case "last12Months":
+          return selectedChartData.slice(-365);
         default:
           return selectedChartData;
       }
@@ -150,12 +153,8 @@ export default {
     },
   },
   async mounted() {
-    try {
       const cheatUrl = "https://cors-anywhere.herokuapp.com/" + etalabUrl;
       this.rawData = await this.fetchData(cheatUrl);
-    } catch {
-      this.rawData = await this.fetchData("/data/code-FRA.json");
-    }
   },
   methods: {
     async fetchData(url) {
@@ -177,7 +176,7 @@ export default {
     getDailyDelta(dailyValues) {
       const result = [];
       for (let i = 0; i < dailyValues.length; i++) {
-        result[i] = dailyValues[i] - (dailyValues[i - 1] || 0);
+        result[i] = Math.max(0, dailyValues[i] - (dailyValues[i - 1] || 0));
       }
       return result;
     },
