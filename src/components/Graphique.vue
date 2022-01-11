@@ -1,7 +1,7 @@
 <template>
   <div>
     <h1>{{ title }}</h1>
-    <Trend smooth auto-draw min="0" :data="values" />
+    <Trend smooth auto-draw :min="0" :data="values" />
     <hr />
   </div>
 </template>

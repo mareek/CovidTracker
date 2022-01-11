@@ -33,7 +33,8 @@
 import Graphique from "./Graphique.vue";
 import _ from "lodash";
 
-const etalabUrl = "https://dashboard.covid19.data.gouv.fr/data/code-FRA.json";
+const dataGouvUrl =
+  "https://www.data.gouv.fr/fr/datasets/r/f335f9ea-86e3-4ffa-9684-93c009d5e617";
 
 export default {
   name: "Dashboard",
@@ -128,18 +129,8 @@ export default {
     reanimation() {
       return this.getDailyValues("reanimation");
     },
-    testsRealises() {
-      return this.getDailyValues("testsRealises");
-    },
-    testsPositifs() {
-      return this.getDailyValues("testsPositifs");
-    },
     positivite() {
-      return _.zipWith(
-        this.testsRealises,
-        this.testsPositifs,
-        (r, p) => p / r || 0
-      );
+      return this.getDailyValues("positivite");
     },
     positiviteHebdomadaire() {
       return this.getWeeklyData(this.positivite).map((d) => (d * 100) / 7);
@@ -153,13 +144,31 @@ export default {
     },
   },
   async mounted() {
-      const cheatUrl = "https://cors-anywhere.herokuapp.com/" + etalabUrl;
-      this.rawData = await this.fetchData(cheatUrl);
+    this.rawData = await this.fetchCsvData(dataGouvUrl);
   },
   methods: {
-    async fetchData(url) {
+    async fetchCsvData(url) {
       const response = await fetch(url);
-      return await response.json();
+      return this.parseCsv(await response.text());
+    },
+    parseCsv(csvData) {
+      return csvData
+        .split("\n")
+        .filter((l) => l.length > 3)
+        .filter((l) => l.startsWith("202"))
+        .map((l) => this.parseCsvLine(l));
+    },
+    parseCsvLine(csvLine) {
+      const splittedLine = csvLine.split(",");
+      console.log(splittedLine[0] + ": " + Date.parse(splittedLine[0]))
+      return {
+        date: splittedLine[0],
+        deces: parseInt(splittedLine[8]),
+        casConfirmes: parseInt(splittedLine[13]),
+        hospitalises: parseInt(splittedLine[6]),
+        reanimation: parseInt(splittedLine[5]),
+        positivite: parseFloat(splittedLine[1]) / 100,
+      };
     },
     getDailyValues(propertyName) {
       if (!this.sortedData.length) {
