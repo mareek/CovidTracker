@@ -51,7 +51,7 @@ export default {
       return [
         { label: "Décès par semaine", prop: "decesHebdomadaire" },
         { label: "Nouveau cas par semaine", prop: "casHebdomadaire" },
-        { label: "Positivité", prop: "positiviteHebdomadaire" },
+        { label: "Positivité", prop: "positivite" },
         { label: "Indice de Circulation", prop: "circulationHebdomadaire" },
         { label: "Hospitalisés", prop: "hospitalises" },
         { label: "Réanimation", prop: "reanimation" },
@@ -117,8 +117,15 @@ export default {
     casConfirmes() {
       return this.getDailyValues("casConfirmes");
     },
+    casJ1() {
+      return this.getDailyValues("casJ1");
+    },
     casQuotidien() {
-      return this.getDailyDelta(this.casConfirmes);
+      return _.zipWith(
+        this.getDailyDelta(this.casConfirmes),
+        this.casJ1,
+        (a, b) => a || b
+      );
     },
     casHebdomadaire() {
       return this.getWeeklyData(this.casQuotidien);
@@ -132,15 +139,8 @@ export default {
     positivite() {
       return this.getDailyValues("positivite");
     },
-    positiviteHebdomadaire() {
-      return this.getWeeklyData(this.positivite).map((d) => (d * 100) / 7);
-    },
     circulationHebdomadaire() {
-      return _.zipWith(
-        this.casHebdomadaire,
-        this.positiviteHebdomadaire,
-        (c, p) => c * p
-      );
+      return _.zipWith(this.casHebdomadaire, this.positivite, (c, p) => c * p);
     },
   },
   async mounted() {
@@ -160,11 +160,11 @@ export default {
     },
     parseCsvLine(csvLine) {
       const splittedLine = csvLine.split(",");
-      console.log(splittedLine[0] + ": " + Date.parse(splittedLine[0]))
       return {
         date: splittedLine[0],
         deces: parseInt(splittedLine[8]),
         casConfirmes: parseInt(splittedLine[13]),
+        casJ1: parseInt(splittedLine[14]),
         hospitalises: parseInt(splittedLine[6]),
         reanimation: parseInt(splittedLine[5]),
         positivite: parseFloat(splittedLine[1]) / 100,
@@ -199,8 +199,8 @@ export default {
     },
     formatValue(value) {
       switch (this.selectedChartProp) {
-        case "positiviteHebdomadaire":
-          return value && value.toFixed(1) + "%";
+        case "positivite":
+          return value && (value * 100).toFixed(1) + "%";
         case "circulationHebdomadaire":
           return value && value.toFixed(0);
         default:
