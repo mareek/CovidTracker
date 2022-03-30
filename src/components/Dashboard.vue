@@ -2,7 +2,8 @@
   <div>
     <p>
       <label for="selectGraph">Type de graphique : </label>
-      <select id="selectGraph" v-model="selectedChartProp">
+      <button @click="changeGraph(-1)">&lt;&lt;</button>
+      <select id="selectGraph" v-model="selectedChartProp" autofocus>
         <option
           v-for="chartType in chartTypes"
           :key="chartType.prop"
@@ -11,6 +12,7 @@
           {{ chartType.label }}
         </option>
       </select>
+      <button @click="changeGraph(1)">&gt;&gt;</button>
     </p>
     <p>
       <label for="selectPeriod">Période affichée : </label>
@@ -43,18 +45,17 @@ export default {
     return {
       rawData: [],
       selectedChartProp: "decesHebdomadaire",
-      selectedPeriod: "wholeData",
+      selectedPeriod: "last12Months",
     };
   },
   computed: {
     chartTypes() {
       return [
-        { label: "Décès par semaine", prop: "decesHebdomadaire" },
         { label: "Nouveau cas par semaine", prop: "casHebdomadaire" },
         { label: "Positivité", prop: "positivite" },
-        { label: "Indice de Circulation", prop: "circulationHebdomadaire" },
         { label: "Hospitalisés", prop: "hospitalises" },
         { label: "Réanimation", prop: "reanimation" },
+        { label: "Décès par semaine", prop: "decesHebdomadaire" },
       ];
     },
     periods() {
@@ -68,20 +69,14 @@ export default {
     },
     chartData() {
       const selectedChartData = this[this.selectedChartProp];
-      switch (this.selectedPeriod) {
-        case "last7days":
-          return selectedChartData.slice(-7);
-        case "last30days":
-          return selectedChartData.slice(-30);
-        case "last90days":
-          return selectedChartData.slice(-90);
-        case "last6Months":
-          return selectedChartData.slice(-182);
-        case "last12Months":
-          return selectedChartData.slice(-365);
-        default:
-          return selectedChartData;
-      }
+      const periodLengths = {
+        last30days: 30,
+        last90days: 90,
+        last6Months: 182,
+        last12Months: 365,
+        wholeData: selectedChartData.length,
+      };
+      return selectedChartData.slice(-periodLengths[this.selectedPeriod]);
     },
     chartTitle() {
       const chartType = this.chartTypes.find(
@@ -147,6 +142,15 @@ export default {
     this.rawData = await this.fetchCsvData(dataGouvUrl);
   },
   methods: {
+    changeGraph(direction) {
+      const currentIndex = this.chartTypes
+        .map((c) => c.prop)
+        .indexOf(this.selectedChartProp);
+      const futureIndex = currentIndex + direction;
+      if (0 <= futureIndex && futureIndex < this.chartTypes.length) {
+        this.selectedChartProp = this.chartTypes[futureIndex].prop;
+      }
+    },
     async fetchCsvData(url) {
       const response = await fetch(url);
       return this.parseCsv(await response.text());
@@ -154,7 +158,7 @@ export default {
     parseCsv(csvData) {
       return csvData
         .split("\n")
-        .filter((l) => l.length > 3)
+        .filter((l) => l.length > 50) // filtre les premieres lignes sans données du fichier
         .filter((l) => l.startsWith("202"))
         .map((l) => this.parseCsvLine(l));
     },
@@ -178,7 +182,14 @@ export default {
       const result = [this.sortedData[0][propertyName] || 0];
       for (let i = 1; i < this.sortedData.length; i++) {
         const dailyValue = this.sortedData[i][propertyName];
-        result[i] = dailyValue || result[i - 1];
+        if (dailyValue) {
+          result[i] = dailyValue;
+        }
+      }
+
+      //comble les jours sans données avec les données de la veille
+      for (let i = 1; i < result.length; i++) {
+        result[i] = result[i] || result[i - 1];
       }
       return result;
     },
